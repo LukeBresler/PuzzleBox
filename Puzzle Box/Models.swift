@@ -20,6 +20,7 @@ struct Ball: Identifiable {
 enum WallType {
     case normal
     case reverse
+    case magnet
 }
 
 struct Wall {

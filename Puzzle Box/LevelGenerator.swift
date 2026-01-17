@@ -59,13 +59,16 @@ final class LevelGenerator: LevelGenerating {
         let minParallelDistance: CGFloat = 60 // Minimum distance between parallel walls
         let maxAttempts = 50
         let includeReverseWall = difficulty >= 2 // Level 3+ (difficulty starts at 0)
+        let includeMagnetWall = difficulty >= 4 // Level 5+
         
         for i in 0..<count {
             var validWall: Wall?
             var attempts = 0
             
-            // First wall should be reverse wall if applicable
+            // First wall should be reverse wall if applicable (level 3+)
+            // Second wall should be magnet wall if applicable (level 5+)
             let shouldBeReverse = includeReverseWall && i == 0
+            let shouldBeMagnet = includeMagnetWall && i == 1
             
             while validWall == nil && attempts < maxAttempts {
                 let isHorizontal = Bool.random()
@@ -74,15 +77,41 @@ final class LevelGenerator: LevelGenerating {
                 if isHorizontal {
                     let y = CGFloat.random(in: 50...(mazeSize - 50))
                     let x = CGFloat.random(in: 0...(mazeSize * 0.6))
-                    let width = shouldBeReverse ? CGFloat.random(in: 50...125) : CGFloat.random(in: 100...250)
+                    let width: CGFloat
+                    let wallType: WallType
+                    
+                    if shouldBeReverse {
+                        width = CGFloat.random(in: 50...125)
+                        wallType = .reverse
+                    } else if shouldBeMagnet {
+                        width = CGFloat.random(in: 25...62.5) // 1/4 normal length
+                        wallType = .magnet
+                    } else {
+                        width = CGFloat.random(in: 100...250)
+                        wallType = .normal
+                    }
+                    
                     let rect = CGRect(x: x, y: y, width: width, height: wallThickness)
-                    candidateWall = Wall(rect: rect, type: shouldBeReverse ? .reverse : .normal)
+                    candidateWall = Wall(rect: rect, type: wallType)
                 } else {
                     let x = CGFloat.random(in: 50...(mazeSize - 50))
                     let y = CGFloat.random(in: 0...(mazeSize * 0.6))
-                    let height = shouldBeReverse ? CGFloat.random(in: 50...125) : CGFloat.random(in: 100...250)
+                    let height: CGFloat
+                    let wallType: WallType
+                    
+                    if shouldBeReverse {
+                        height = CGFloat.random(in: 50...125)
+                        wallType = .reverse
+                    } else if shouldBeMagnet {
+                        height = CGFloat.random(in: 25...62.5) // 1/4 normal length
+                        wallType = .magnet
+                    } else {
+                        height = CGFloat.random(in: 100...250)
+                        wallType = .normal
+                    }
+                    
                     let rect = CGRect(x: x, y: y, width: wallThickness, height: height)
-                    candidateWall = Wall(rect: rect, type: shouldBeReverse ? .reverse : .normal)
+                    candidateWall = Wall(rect: rect, type: wallType)
                 }
                 
                 if isValidWallPlacement(candidateWall, existingWalls: walls, minParallelDistance: minParallelDistance) {
@@ -188,7 +217,14 @@ final class LevelGenerator: LevelGenerating {
             let closestX = max(wall.rect.minX, min(position.x, wall.rect.maxX))
             let closestY = max(wall.rect.minY, min(position.y, wall.rect.maxY))
             let dist = hypot(position.x - closestX, position.y - closestY)
-            if dist < 30 {
+            
+            // Regular walls need 30 points clearance
+            if wall.type != .magnet && dist < 30 {
+                return false
+            }
+            
+            // Magnet walls need 150+ points clearance (outside magnetic range)
+            if wall.type == .magnet && dist < 150 {
                 return false
             }
         }

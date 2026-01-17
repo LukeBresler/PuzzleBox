@@ -1,12 +1,4 @@
 //
-//  PhysicsConfiguration.swift
-//  Puzzle Box
-//
-//  Created by Luke Bresler on 2026/01/17.
-//
-
-
-//
 //  PhysicsEngine.swift
 //  Puzzle Box
 //
@@ -33,6 +25,12 @@ protocol PhysicsEngineProtocol {
         deltaTime: Double,
         hapticProvider: HapticFeedbackProvider
     )
+    
+    func applyMagneticForce(
+        to ball: inout Ball,
+        from walls: [Wall],
+        ballRadius: CGFloat
+    )
 }
 
 // MARK: - Physics Engine
@@ -53,6 +51,7 @@ final class PhysicsEngine: PhysicsEngineProtocol {
             if balls[i].isCompleted { continue }
             
             applyGravity(to: &balls[i], tilt: tilt, deltaTime: deltaTime)
+            applyMagneticForce(to: &balls[i], from: walls, ballRadius: ballRadius)
             applyFriction(to: &balls[i])
             updatePosition(of: &balls[i], deltaTime: deltaTime)
             
@@ -76,6 +75,27 @@ final class PhysicsEngine: PhysicsEngineProtocol {
                 balls: &balls,
                 ballRadius: ballRadius
             )
+        }
+    }
+    
+    func applyMagneticForce(to ball: inout Ball, from walls: [Wall], ballRadius: CGFloat) {
+        for wall in walls where wall.type == .magnet {
+            let closestX = max(wall.rect.minX, min(ball.position.x, wall.rect.maxX))
+            let closestY = max(wall.rect.minY, min(ball.position.y, wall.rect.maxY))
+            
+            let dx = closestX - ball.position.x
+            let dy = closestY - ball.position.y
+            let distance = sqrt(dx * dx + dy * dy)
+            
+            // Strong magnetic force with falloff
+            let magneticRange: CGFloat = 150
+            if distance < magneticRange && distance > 0.1 {
+                let strength: CGFloat = 15.0 // Strong magnet
+                let force = strength / (distance * distance) * 1000
+                
+                ball.velocity.x += (dx / distance) * force
+                ball.velocity.y += (dy / distance) * force
+            }
         }
     }
     

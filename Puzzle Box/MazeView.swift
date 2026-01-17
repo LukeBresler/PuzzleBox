@@ -63,9 +63,16 @@ struct MazeView: View {
             Rectangle()
                 .fill(
                     LinearGradient(
-                        colors: wall.type == .reverse ?
-                            [Color.orange, Color.orange.opacity(0.8)] :
-                            [Color(white: 0.5), Color(white: 0.4)],
+                        colors: {
+                            switch wall.type {
+                            case .reverse:
+                                return [Color.orange, Color.orange.opacity(0.8)]
+                            case .magnet:
+                                return [Color.blue, Color.blue.opacity(0.8)]
+                            case .normal:
+                                return [Color(white: 0.5), Color(white: 0.4)]
+                            }
+                        }(),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -76,6 +83,20 @@ struct MazeView: View {
                         if wall.type == .reverse {
                             Rectangle()
                                 .strokeBorder(Color.orange.opacity(0.6), lineWidth: 2)
+                        } else if wall.type == .magnet {
+                            ZStack {
+                                Rectangle()
+                                    .strokeBorder(Color.blue.opacity(0.6), lineWidth: 2)
+                                
+                                // Add magnetic field effect
+                                Circle()
+                                    .stroke(Color.blue.opacity(0.2), lineWidth: 1)
+                                    .frame(width: 100, height: 100)
+                                
+                                Circle()
+                                    .stroke(Color.blue.opacity(0.15), lineWidth: 1)
+                                    .frame(width: 150, height: 150)
+                            }
                         }
                     }
                 )
