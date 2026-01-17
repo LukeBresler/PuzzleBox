@@ -1,0 +1,52 @@
+//
+//  Ball.swift
+//  Puzzle Box
+//
+//  Created by Luke Bresler on 2026/01/17.
+//
+
+
+//
+//  Models.swift
+//  Puzzle Box
+//
+
+import Foundation
+import CoreGraphics
+
+// MARK: - Ball
+
+struct Ball: Identifiable {
+    let id: Int
+    var position: CGPoint
+    var velocity: CGPoint
+    var isCompleted: Bool = false
+}
+
+// MARK: - Wall
+
+struct Wall {
+    let rect: CGRect
+}
+
+// MARK: - Hole
+
+struct Hole {
+    let position: CGPoint
+    let radius: CGFloat = 12
+}
+
+// MARK: - MazeLayer
+
+struct MazeLayer {
+    let walls: [Wall]
+    let holes: [Hole]
+    var initialBalls: [Ball]
+}
+
+// MARK: - Level
+
+struct Level {
+    let name: String
+    let layers: [MazeLayer]
+}
