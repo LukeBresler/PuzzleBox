@@ -46,22 +46,26 @@ final class LevelGenerator: LevelGenerating {
         let numWalls = 2 + difficulty + Int.random(in: 0...2)
         let numHoles = isFirstLayer ? numBalls : max(1, numBalls - layerIndex)
         
-        let walls = generateWalls(count: numWalls, mazeSize: mazeSize)
+        let walls = generateWalls(count: numWalls, mazeSize: mazeSize, difficulty: difficulty)
         let holes = generateHoles(count: numHoles, walls: walls, mazeSize: mazeSize)
         let balls = isFirstLayer ? generateBalls(count: numBalls) : []
         
         return MazeLayer(walls: walls, holes: holes, initialBalls: balls)
     }
     
-    private func generateWalls(count: Int, mazeSize: CGFloat) -> [Wall] {
+    private func generateWalls(count: Int, mazeSize: CGFloat, difficulty: Int) -> [Wall] {
         var walls: [Wall] = []
         let wallThickness: CGFloat = 4
         let minParallelDistance: CGFloat = 60 // Minimum distance between parallel walls
         let maxAttempts = 50
+        let includeReverseWall = difficulty >= 2 // Level 3+ (difficulty starts at 0)
         
-        for _ in 0..<count {
+        for i in 0..<count {
             var validWall: Wall?
             var attempts = 0
+            
+            // First wall should be reverse wall if applicable
+            let shouldBeReverse = includeReverseWall && i == 0
             
             while validWall == nil && attempts < maxAttempts {
                 let isHorizontal = Bool.random()
@@ -70,13 +74,15 @@ final class LevelGenerator: LevelGenerating {
                 if isHorizontal {
                     let y = CGFloat.random(in: 50...(mazeSize - 50))
                     let x = CGFloat.random(in: 0...(mazeSize * 0.6))
-                    let width = CGFloat.random(in: 100...250)
-                    candidateWall = Wall(rect: CGRect(x: x, y: y, width: width, height: wallThickness))
+                    let width = shouldBeReverse ? CGFloat.random(in: 50...125) : CGFloat.random(in: 100...250)
+                    let rect = CGRect(x: x, y: y, width: width, height: wallThickness)
+                    candidateWall = Wall(rect: rect, type: shouldBeReverse ? .reverse : .normal)
                 } else {
                     let x = CGFloat.random(in: 50...(mazeSize - 50))
                     let y = CGFloat.random(in: 0...(mazeSize * 0.6))
-                    let height = CGFloat.random(in: 100...250)
-                    candidateWall = Wall(rect: CGRect(x: x, y: y, width: wallThickness, height: height))
+                    let height = shouldBeReverse ? CGFloat.random(in: 50...125) : CGFloat.random(in: 100...250)
+                    let rect = CGRect(x: x, y: y, width: wallThickness, height: height)
+                    candidateWall = Wall(rect: rect, type: shouldBeReverse ? .reverse : .normal)
                 }
                 
                 if isValidWallPlacement(candidateWall, existingWalls: walls, minParallelDistance: minParallelDistance) {

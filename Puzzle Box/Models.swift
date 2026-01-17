@@ -1,12 +1,4 @@
 //
-//  Ball.swift
-//  Puzzle Box
-//
-//  Created by Luke Bresler on 2026/01/17.
-//
-
-
-//
 //  Models.swift
 //  Puzzle Box
 //
@@ -25,8 +17,19 @@ struct Ball: Identifiable {
 
 // MARK: - Wall
 
+enum WallType {
+    case normal
+    case reverse
+}
+
 struct Wall {
     let rect: CGRect
+    let type: WallType
+    
+    init(rect: CGRect, type: WallType = .normal) {
+        self.rect = rect
+        self.type = type
+    }
 }
 
 // MARK: - Hole

@@ -2,14 +2,6 @@
 //  GameState.swift
 //  Puzzle Box
 //
-//  Created by Luke Bresler on 2026/01/17.
-//
-
-
-//
-//  GameState.swift
-//  Puzzle Box
-//
 
 import SwiftUI
 import Combine
@@ -23,6 +15,7 @@ final class GameState: ObservableObject {
     @Published var currentDifficulty: Int = 0
     @Published var isLevelComplete: Bool = false
     @Published var currentLevel: Level
+    @Published var physicsReversed: Bool = false
     
     // Constants
     let ballRadius: CGFloat = 8
@@ -68,6 +61,7 @@ final class GameState: ObservableObject {
         currentLayerIndex = 0
         balls = currentLevel.layers[0].initialBalls
         isLevelComplete = false
+        physicsReversed = false
     }
     
     func generateNewLevel() {
@@ -77,9 +71,13 @@ final class GameState: ObservableObject {
     }
     
     func updatePhysics(deltaTime: Double) {
+        let tilt = physicsReversed ?
+            CGPoint(x: -motionManager.currentTilt.x, y: -motionManager.currentTilt.y) :
+            motionManager.currentTilt
+        
         physicsEngine.updateBalls(
             &balls,
-            tilt: motionManager.currentTilt,
+            tilt: tilt,
             walls: currentLayer.walls,
             ballRadius: ballRadius,
             mazeSize: mazeSize,
@@ -88,6 +86,7 @@ final class GameState: ObservableObject {
         )
         
         checkHoleCollisions()
+        checkReverseWallCollisions()
     }
     
     // MARK: - Private Methods
@@ -114,12 +113,32 @@ final class GameState: ObservableObject {
         }
     }
     
+    private func checkReverseWallCollisions() {
+        for ball in balls where !ball.isCompleted {
+            for wall in currentLayer.walls where wall.type == .reverse {
+                let closestX = max(wall.rect.minX, min(ball.position.x, wall.rect.maxX))
+                let closestY = max(wall.rect.minY, min(ball.position.y, wall.rect.maxY))
+                
+                let dx = ball.position.x - closestX
+                let dy = ball.position.y - closestY
+                let distance = sqrt(dx * dx + dy * dy)
+                
+                if distance < ballRadius {
+                    physicsReversed.toggle()
+                    hapticProvider.boundaryHit()
+                    break
+                }
+            }
+        }
+    }
+    
     private func advanceLayer() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             guard let self = self else { return }
             
             if self.currentLayerIndex < self.currentLevel.layers.count - 1 {
                 self.currentLayerIndex += 1
+                self.physicsReversed = false
                 
                 let holePos = self.currentLevel.layers[self.currentLayerIndex - 1].holes.first?.position ?? .zero
                 self.balls = self.balls.map { ball in

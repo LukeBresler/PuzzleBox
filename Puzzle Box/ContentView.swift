@@ -2,14 +2,6 @@
 //  ContentView.swift
 //  Puzzle Box
 //
-//  Created by Luke Bresler on 2026/01/17.
-//
-
-
-//
-//  ContentView.swift
-//  Puzzle Box
-//
 //  Created by Luke Bresler on 2026/01/15.
 //
 
@@ -67,9 +59,21 @@ struct ContentView: View {
                 .font(.system(size: 24, weight: .bold))
                 .foregroundColor(.white)
             
-            Text("Layer \(gameState.currentLayerIndex + 1) of \(gameState.currentLevel.layers.count)")
-                .font(.system(size: 14))
-                .foregroundColor(.gray)
+            HStack(spacing: 12) {
+                Text("Layer \(gameState.currentLayerIndex + 1) of \(gameState.currentLevel.layers.count)")
+                    .font(.system(size: 14))
+                    .foregroundColor(.gray)
+                
+                if gameState.physicsReversed {
+                    Text("🔄 REVERSED")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.orange)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.orange.opacity(0.2))
+                        .cornerRadius(4)
+                }
+            }
         }
         .padding(.top, 20)
         .padding(.bottom, 10)

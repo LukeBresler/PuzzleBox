@@ -2,14 +2,6 @@
 //  MazeView.swift
 //  Puzzle Box
 //
-//  Created by Luke Bresler on 2026/01/17.
-//
-
-
-//
-//  MazeView.swift
-//  Puzzle Box
-//
 
 import SwiftUI
 
@@ -67,18 +59,29 @@ struct MazeView: View {
     
     private var wallsLayer: some View {
         ForEach(layer.walls.indices, id: \.self) { index in
+            let wall = layer.walls[index]
             Rectangle()
                 .fill(
                     LinearGradient(
-                        colors: [Color(white: 0.5), Color(white: 0.4)],
+                        colors: wall.type == .reverse ?
+                            [Color.orange, Color.orange.opacity(0.8)] :
+                            [Color(white: 0.5), Color(white: 0.4)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
-                .frame(width: layer.walls[index].rect.width, height: layer.walls[index].rect.height)
+                .frame(width: wall.rect.width, height: wall.rect.height)
+                .overlay(
+                    Group {
+                        if wall.type == .reverse {
+                            Rectangle()
+                                .strokeBorder(Color.orange.opacity(0.6), lineWidth: 2)
+                        }
+                    }
+                )
                 .position(
-                    x: layer.walls[index].rect.midX,
-                    y: layer.walls[index].rect.midY
+                    x: wall.rect.midX,
+                    y: wall.rect.midY
                 )
         }
     }
