@@ -1,12 +1,4 @@
 //
-//  LevelGenerating.swift
-//  Puzzle Box
-//
-//  Created by Luke Bresler on 2026/01/17.
-//
-
-
-//
 //  LevelGenerator.swift
 //  Puzzle Box
 //
@@ -63,25 +55,83 @@ final class LevelGenerator: LevelGenerating {
     
     private func generateWalls(count: Int, mazeSize: CGFloat) -> [Wall] {
         var walls: [Wall] = []
+        let wallThickness: CGFloat = 4
+        let minParallelDistance: CGFloat = 60 // Minimum distance between parallel walls
+        let maxAttempts = 50
         
         for _ in 0..<count {
-            let isHorizontal = Bool.random()
-            let wallThickness: CGFloat = 4
+            var validWall: Wall?
+            var attempts = 0
             
-            if isHorizontal {
-                let y = CGFloat.random(in: 50...(mazeSize - 50))
-                let x = CGFloat.random(in: 0...(mazeSize * 0.6))
-                let width = CGFloat.random(in: 100...250)
-                walls.append(Wall(rect: CGRect(x: x, y: y, width: width, height: wallThickness)))
-            } else {
-                let x = CGFloat.random(in: 50...(mazeSize - 50))
-                let y = CGFloat.random(in: 0...(mazeSize * 0.6))
-                let height = CGFloat.random(in: 100...250)
-                walls.append(Wall(rect: CGRect(x: x, y: y, width: wallThickness, height: height)))
+            while validWall == nil && attempts < maxAttempts {
+                let isHorizontal = Bool.random()
+                let candidateWall: Wall
+                
+                if isHorizontal {
+                    let y = CGFloat.random(in: 50...(mazeSize - 50))
+                    let x = CGFloat.random(in: 0...(mazeSize * 0.6))
+                    let width = CGFloat.random(in: 100...250)
+                    candidateWall = Wall(rect: CGRect(x: x, y: y, width: width, height: wallThickness))
+                } else {
+                    let x = CGFloat.random(in: 50...(mazeSize - 50))
+                    let y = CGFloat.random(in: 0...(mazeSize * 0.6))
+                    let height = CGFloat.random(in: 100...250)
+                    candidateWall = Wall(rect: CGRect(x: x, y: y, width: wallThickness, height: height))
+                }
+                
+                if isValidWallPlacement(candidateWall, existingWalls: walls, minParallelDistance: minParallelDistance) {
+                    validWall = candidateWall
+                }
+                
+                attempts += 1
+            }
+            
+            if let wall = validWall {
+                walls.append(wall)
             }
         }
         
         return walls
+    }
+    
+    private func isValidWallPlacement(_ wall: Wall, existingWalls: [Wall], minParallelDistance: CGFloat) -> Bool {
+        let isHorizontal = wall.rect.width > wall.rect.height
+        
+        for existingWall in existingWalls {
+            let existingIsHorizontal = existingWall.rect.width > existingWall.rect.height
+            
+            // Check if walls are parallel (both horizontal or both vertical)
+            if isHorizontal == existingIsHorizontal {
+                let distance: CGFloat
+                
+                if isHorizontal {
+                    // For horizontal walls, check vertical distance
+                    distance = abs(wall.rect.midY - existingWall.rect.midY)
+                    
+                    // Also check if they overlap horizontally
+                    let horizontalOverlap = !(wall.rect.maxX < existingWall.rect.minX ||
+                                             wall.rect.minX > existingWall.rect.maxX)
+                    
+                    if horizontalOverlap && distance < minParallelDistance {
+                        return false
+                    }
+                } else {
+                    // For vertical walls, check horizontal distance
+                    distance = abs(wall.rect.midX - existingWall.rect.midX)
+                    
+                    // Also check if they overlap vertically
+                    let verticalOverlap = !(wall.rect.maxY < existingWall.rect.minY ||
+                                           wall.rect.minY > existingWall.rect.maxY)
+                    
+                    if verticalOverlap && distance < minParallelDistance {
+                        return false
+                    }
+                }
+            }
+            // Perpendicular walls are allowed to be close, so we don't check them
+        }
+        
+        return true
     }
     
     private func generateHoles(count: Int, walls: [Wall], mazeSize: CGFloat) -> [Hole] {
